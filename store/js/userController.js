@@ -50,6 +50,7 @@ userApp
       }
 
       UserClass.prototype.register = function(user) {
+        var self = this;
         $http({
             url: 'http://test-api.evermight.com/register.php',
             method: 'POST',
@@ -68,6 +69,7 @@ userApp
             if (response.success) {
               User.user = user;
               self.showNotification('showSuccess', 'Registered in');
+              $location.url('login');
             } else {
               self.showNotification('showError', 'cannot register in');
             }
@@ -76,6 +78,7 @@ userApp
             if (response.success) {
               User.user = user;
               self.showNotification('showSuccess', 'register in');
+              $location.url('login');
             } else self.showNotification('showError', 'cannot register in');
           });
       }
@@ -131,7 +134,7 @@ userApp
               self.getCars();
               self.showNotification('showSuccess', 'Added new car');
             } else {
-              self.showNotification('showError', 'Cannot Added new car');
+              self.showNotification('showError', 'Cannot added new car');
             }
           })
           .error(function(response) {
@@ -304,8 +307,9 @@ userApp
       _.forEach(_.keys(self.user), function(key) {
         if (key !== 'id' && !self.user[key]) isEmpty = key;
       });
+      console.log(isEmpty)
       if (!isEmpty && self.user.userName.length < 3) isInvalidName = true;
-      if (!isEmpty && self.user.password.length < 8) isInvalidName = true;
+      if (!isEmpty && self.user.password.length < 8) isInvalidPass = true;
       if (isEmpty) {
         User.showNotification('showError', 'Please check fields.');
       } else if (isInvalidName) {
