@@ -17,7 +17,7 @@ userApp
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded'
             },
-            url: '//test-api.evermight.com/login.php',
+            url: 'http://test-api.evermight.com/login.php',
             data: $.param({
               email: user.email,
               password: user.password,
@@ -38,7 +38,7 @@ userApp
 
       UserClass.prototype.register = function(user) {
         $http({
-            url: '//test-api.evermight.com/register.php',
+            url: 'http://test-api.evermight.com/register.php',
             method: 'POST',
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded'
@@ -67,7 +67,7 @@ userApp
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded'
             },
-            url: '//test-api.evermight.com/login.php',
+            url: 'http://test-api.evermight.com/login.php',
             data: $.param({
               email: User.user.email,
               password: User.user.password
