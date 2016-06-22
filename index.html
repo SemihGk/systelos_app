@@ -38,10 +38,11 @@
       </div>
 
       <ul class="nav navbar-nav navbar-right">
-        <li ng-if="!true"><a ui-sref='home'><i class="fa fa-home"></i> Home</a></li>
-        <li ng-if="!true"><a ui-sref='cars'><i class="fa fa-shield"></i> Cars</a></li>
-        <li ng-if="!false"><a ui-sref='login'><i class="fa fa-home"></i> Login</a></li>
-        <li ng-if="!false"><a ui-sref='register'><i class="fa fa-shield"></i> Register</a></li>
+        <li ng-if="ctrl.loggedin"><a ui-sref='home'><i class="fa fa-home"></i> Home</a></li>
+        <li ng-if="ctrl.loggedin"><a ui-sref='cars'><i class="fa fa-shield"></i> Cars</a></li>
+        <li ng-if="ctrl.loggedin"><a ng-click="ctrl.logout()"><i class="fa fa-shield"></i> Logout</a></li>
+        <li ng-if="!ctrl.loggedin"><a ui-sref='login'><i class="fa fa-home"></i> Login</a></li>
+        <li ng-if="!ctrl.loggedin"><a ui-sref='register'><i class="fa fa-shield"></i> Register</a></li>
       </ul>
     </div>
   </nav>

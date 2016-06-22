@@ -12,6 +12,7 @@ userApp
 
       var User = new UserClass();
       UserClass.prototype.login = function(user) {
+        var self = this;
         $http({
             method: 'POST',
             headers: {
@@ -27,11 +28,15 @@ userApp
           .success(function(response) {
             if (response.success) {
               $location.url('/home');
+              self.loggedin = true;
+              $rootScope.$emit('loggedin', self);
             }
           })
           .error(function(response) {
             if (response.success) {
               $location.url('/home');
+              self.loggedin = true;
+              $rootScope.$emit('loggedin', self);
             }
           });
       }
@@ -60,32 +65,12 @@ userApp
           });
       }
 
-      UserClass.prototype.checkLoggedOut = function() {
-        var deferred = $q.defer();
-        $http({
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            url: 'http://test-api.evermight.com/login.php',
-            data: $.param({
-              email: User.user.email,
-              password: User.user.password
-            })
-          })
-          .success(function(response) {
-            // Authenticated
-            if (response.success) {
-              $timeout(deferred.reject);
-              $location.url('/home');
-            }
-          })
-          .error(function(res) {
-            $timeout(deferred.resolve);
-          });
-
-        return deferred.promise;
-      }
+      UserClass.prototype.logout = function() {
+        this.user = {};
+        this.loggedin = false;
+        $rootScope.$emit('loggedin', this);
+        $location.url('/login');
+      };
 
       return User;
     }
@@ -94,30 +79,37 @@ userApp
     $stateProvider
       .state("home", {
         url: "/home",
-        templateUrl: "pages/home.html"
+        templateUrl: "pages/home.html",
+        authenticate: true
       })
       .state("cars", {
         url: "/cars",
-        templateUrl: "pages/cars.html"
+        templateUrl: "pages/cars.html",
+        authenticate: true
       })
       .state("register", {
         url: "/register",
         templateUrl: "pages/register.html",
-        resolve: {
-          loggedin: function(User) {
-            return User.checkLoggedOut();
-          }
-        }
+        authenticate: false
       })
       .state("login", {
         url: "/login",
         templateUrl: "pages/login.html",
+        authenticate: false
       });
     // Send to login if the URL was not found
     $urlRouterProvider.otherwise("/login");
   })
-  .controller('userController', function($scope) {
-    // nothing
+  .controller('userController', function($scope, $rootScope, User) {
+    var self = this;
+    self.loggedin = User.loggedin;
+    $rootScope.$on('loggedin', function(event, args){
+      console.log(args)
+      self.loggedin = args.loggedin;
+    });
+    self.logout = function() {
+      User.logout();
+    }
   })
   .controller('loginController', function($scope, User) {
     var self = this;
@@ -131,15 +123,25 @@ userApp
     }
   })
   .controller('registerController', function($scope, $rootScope, User) {
-      var self = this;
-      self.user = {
-        userName: null,
-        lastName: null,
-        email: null,
-        password: null
-      }
-      console.log(User)
-      self.register = function() {
-        User.register(self.user);
-      }
+    var self = this;
+    self.user = {
+      userName: null,
+      lastName: null,
+      email: null,
+      password: null
+    }
+    console.log(User)
+    self.register = function() {
+      User.register(self.user);
+    }
+  });
+
+  userApp.run(function ($rootScope, $state, User) {
+      $rootScope.$on("$stateChangeStart", function(event, toState, toParams, fromState, fromParams){
+        if (toState.authenticate && !User.loggedin){
+          // User isn’t authenticated
+          $state.transitionTo("login");
+          event.preventDefault();
+        }
+      });
     });
