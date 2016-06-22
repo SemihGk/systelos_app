@@ -1,5 +1,5 @@
 // create the module and name it userApp
-var userApp = angular.module('userApp', ['ngRoute', 'ui.router']);
+var userApp = angular.module('userApp', ['ngRoute', 'ui.router', 'ngMaterial', 'md.data.table']);
 
 userApp
   .factory('User', ['$rootScope', '$http', '$q', '$timeout', '$location',
@@ -72,6 +72,61 @@ userApp
         $location.url('/login');
       };
 
+      UserClass.prototype.getCars = function() {
+        var self = this;
+        $http({
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            url: 'http://test-api.evermight.com/listcar.php',
+            data: $.param({
+              appkey: 18
+            })
+          })
+          .success(function(response) {
+            if (response.success) {
+              $location.url('/home');
+              self.loggedin = true;
+              $rootScope.$emit('listcars', response);
+            }
+          })
+          .error(function(response) {
+            if (response.success) {
+              $location.url('/home');
+              self.loggedin = true;
+              $rootScope.$emit('listcars', response);
+            }
+          });
+      }
+
+      UserClass.prototype.addCar = function(car) {
+        var self = this;
+        $http({
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            url: 'http://test-api.evermight.com/addcar.php',
+            data: $.param({
+              model: car.model,
+              millage: car.millage,
+              yeaer: car.year,
+              appkey: 18
+            })
+          })
+          .success(function(response) {
+            if (response.success) {
+              self.getCars();
+            }
+          })
+          .error(function(response) {
+            if (response.success) {
+                self.getCars();
+            }
+          });
+      }
+
       return User;
     }
   ]) // factory
@@ -103,13 +158,42 @@ userApp
   .controller('userController', function($scope, $rootScope, User) {
     var self = this;
     self.loggedin = User.loggedin;
+    self.cls = "body";
     $rootScope.$on('loggedin', function(event, args){
       console.log(args)
       self.loggedin = args.loggedin;
+      self.cls = self.loggedin ? "" : "body";
     });
     self.logout = function() {
       User.logout();
     }
+  })
+  .controller('carController', function($scope, User, $rootScope) {
+    var self = this;
+    $scope.selected = [];
+
+    $scope.query = {
+      order: 'name',
+      limit: 5,
+      page: 1
+    };
+    $scope.car = {
+      model: null,
+      year: null,
+      millage: null
+    };
+
+    self.init = function()  {
+      User.getCars();
+    }
+
+    self.addCar = function() {
+      User.addCar($scope.car);
+    }
+
+    $rootScope.$on('listcars', function(event, args){
+      $scope.cars = args.cars;
+    });
   })
   .controller('loginController', function($scope, User) {
     var self = this;
