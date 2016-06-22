@@ -1,9 +1,9 @@
 // create the module and name it userApp
-var userApp = angular.module('userApp', ['ngRoute', 'ui.router', 'ngMaterial', 'md.data.table']);
+var userApp = angular.module('userApp', ['ngRoute', 'ui.router', 'ngMaterial', 'md.data.table', 'ngNotificationsBar']);
 
 userApp
-  .factory('User', ['$rootScope', '$http', '$q', '$timeout', '$location',
-    function($rootScope, $http, $q, $timeout, $location) {
+  .factory('User', ['$rootScope', '$http', '$q', '$timeout', '$location', 'notifications',
+    function($rootScope, $http, $q, $timeout, $location, notifications) {
 
       function UserClass() {
         this.user = {};
@@ -30,6 +30,10 @@ userApp
               $location.url('/home');
               self.loggedin = true;
               $rootScope.$emit('loggedin', self);
+              self.showNotification('showSuccess', 'logged in');
+            } else {
+              $rootScope.$emit('loggedin', self);
+              self.showNotification('showError', 'cannot log in');
             }
           })
           .error(function(response) {
@@ -37,6 +41,10 @@ userApp
               $location.url('/home');
               self.loggedin = true;
               $rootScope.$emit('loggedin', self);
+              self.showNotification('showSuccess', 'logged in');
+            } else {
+              $rootScope.$emit('loggedin', self);
+              self.showNotification('showError', 'cannot log in');
             }
           });
       }
@@ -57,11 +65,18 @@ userApp
             })
           })
           .success(function(response) {
-            console.log(response);
-            User.user = user;
+            if (response.success) {
+              User.user = user;
+              self.showNotification('showSuccess', 'Registered in');
+            } else {
+              self.showNotification('showError', 'cannot register in');
+            }
           })
-          .error(function(err) {
-            console.log(err);
+          .error(function(response) {
+            if (response.success) {
+              User.user = user;
+              self.showNotification('showSuccess', 'register in');
+            } else self.showNotification('showError', 'cannot register in');
           });
       }
 
@@ -86,15 +101,11 @@ userApp
           })
           .success(function(response) {
             if (response.success) {
-              $location.url('/home');
-              self.loggedin = true;
               $rootScope.$emit('listcars', response);
             }
           })
           .error(function(response) {
             if (response.success) {
-              $location.url('/home');
-              self.loggedin = true;
               $rootScope.$emit('listcars', response);
             }
           });
@@ -111,21 +122,67 @@ userApp
             data: $.param({
               model: car.model,
               millage: car.millage,
-              yeaer: car.year,
+              year: car.year,
               appkey: 18
             })
           })
           .success(function(response) {
             if (response.success) {
               self.getCars();
+              self.showNotification('showSuccess', 'Added new car');
+            } else {
+              self.showNotification('showError', 'Cannot Added new car');
             }
           })
           .error(function(response) {
             if (response.success) {
-                self.getCars();
+              self.getCars();
+              self.showNotification('showSuccess', 'Added new car');
+            } else {
+              self.showNotification('showError', 'Cannot Added new car');
             }
           });
       }
+
+      UserClass.prototype.removeCar = function(car) {
+        var self = this;
+        $http({
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            url: 'http://test-api.evermight.com/deletecar.php',
+            data: $.param({
+              id: car.id,
+              appkey: 18
+            })
+          })
+          .success(function(response) {
+            if (response.success) {
+              self.getCars();
+              self.showNotification('showSuccess', 'Removed car');
+            } else {
+              self.showNotification('showError', 'Cannot removed  car');
+            }
+          })
+          .error(function(response) {
+            if (response.success) {
+              self.getCars();
+              self.showNotification('showSuccess', 'Removed car');
+            } else {
+              self.showNotification('showError', 'Cannot remove car');
+            }
+          });
+      }
+
+      UserClass.prototype.showNotification = function(type, msg) {
+        notifications[type]({
+          message: msg,
+          hideDelay: 1500, //ms
+          hide: true //bool
+        });
+      }
+
 
       return User;
     }
@@ -159,7 +216,7 @@ userApp
     var self = this;
     self.loggedin = User.loggedin;
     self.cls = "body";
-    $rootScope.$on('loggedin', function(event, args){
+    $rootScope.$on('loggedin', function(event, args) {
       console.log(args)
       self.loggedin = args.loggedin;
       self.cls = self.loggedin ? "" : "body";
@@ -183,19 +240,43 @@ userApp
       millage: null
     };
 
-    self.init = function()  {
+    self.init = function() {
       User.getCars();
     }
 
     self.addCar = function() {
-      User.addCar($scope.car);
+      var isEmpty = null;
+      var isInvalid = false;
+      _.forEach(_.keys($scope.car), function(key) {
+        if (key !== 'id' && !$scope.car[key]) isEmpty = key;
+      });
+      if (!isEmpty && (!parseInt($scope.car.year) || !parseInt($scope.car.millage))) isInvalid = true;
+      console.log(isEmpty, isInvalid, !parseInt($scope.car.year), !parseInt($scope.car.millage))
+      if (isEmpty) {
+        User.showNotification('showError', 'Please check fields.');
+      } else if (isInvalid) {
+        User.showNotification('showError', 'Please check fields.');
+      } else {
+        User.addCar($scope.car);
+      }
     }
 
-    $rootScope.$on('listcars', function(event, args){
-      $scope.cars = args.cars;
+    self.removeCar = function(car) {
+      User.removeCar(car);
+    }
+
+    $rootScope.$on('listcars', function(event, args) {
+
+      $scope.cars = _.map(args.cars, function(car) {
+        var newCar = {};
+        _.each(_.keys(car), function(ky) {
+          newCar[ky.toLowerCase()] = car[ky];
+        });
+        return newCar;
+      });
     });
   })
-  .controller('loginController', function($scope, User) {
+  .controller('loginController', function($scope, $rootScope, User) {
     var self = this;
     self.user = {
       email: null,
@@ -214,18 +295,35 @@ userApp
       email: null,
       password: null
     }
-    console.log(User)
+
+
     self.register = function() {
-      User.register(self.user);
+      var isEmpty = null;
+      var isInvalidName = false;
+      var isInvalidPass = false;
+      _.forEach(_.keys(self.user), function(key) {
+        if (key !== 'id' && !self.user[key]) isEmpty = key;
+      });
+      if (!isEmpty && self.user.userName.length < 3) isInvalidName = true;
+      if (!isEmpty && self.user.password.length < 8) isInvalidName = true;
+      if (isEmpty) {
+        User.showNotification('showError', 'Please check fields.');
+      } else if (isInvalidName) {
+        User.showNotification('showError', 'Minimum name length is 4.');
+      } else if (isInvalidPass) {
+        User.showNotification('showError', 'Minimum pass length is 8.');
+      } else {
+        User.register(self.user);
+      }
     }
   });
 
-  userApp.run(function ($rootScope, $state, User) {
-      $rootScope.$on("$stateChangeStart", function(event, toState, toParams, fromState, fromParams){
-        if (toState.authenticate && !User.loggedin){
-          // User isn’t authenticated
-          $state.transitionTo("login");
-          event.preventDefault();
-        }
-      });
-    });
+userApp.run(function($rootScope, $state, User) {
+  $rootScope.$on("$stateChangeStart", function(event, toState, toParams, fromState, fromParams) {
+    if (toState.authenticate && !User.loggedin) {
+      // User isn’t authenticated
+      $state.transitionTo("login");
+      event.preventDefault();
+    }
+  });
+});
