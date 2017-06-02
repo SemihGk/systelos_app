@@ -1,0 +1,76 @@
+<div ng-controller="taskController as taskctrl" ng-init="taskctrl.init()">
+  <div class="col-sm-6">
+    <form ng-submit="taskctrl.addTask()">
+      <md-toolbar class="md-table-toolbar md-default">
+        <div class="md-toolbar-tools">
+          <span>Add task</span>
+        </div>
+      </md-toolbar>
+      <md-input-container class="md-block">
+        <label>Title</label>
+        <textarea name="title" ng-model="task.title" md-maxlength="10" rows="5" md-select-on-focus>
+        </textarea>
+        <!-- <div class="errors" ng-messages="taskForm.model.$error" ng-if="!task.model" ng-show="taskForm.$submitted || taskForm.model.$touched">
+          <div ng-message="required">Required</div>
+        </div> -->
+      </md-input-container>
+      <md-input-container class="md-block">
+        <label>Description</label>
+        <textarea name="description" ng-model="task.description" md-maxlength="4" rows="5" md-select-on-focus>
+        </textarea>
+        <!-- <div class="errors" ng-messages="taskForm.year.$error" ng-if="!task.year" ng-show="taskForm.$submitted || taskForm.year.$touched">
+          <div ng-message="required">Required</div>
+        </div> -->
+      </md-input-container>
+      <!-- <md-input-container> -->
+          <label>Due Date</label>
+          <md-datepicker name="duedate" ng-model="task.duedate" md-placeholder="Due Date"></md-datepicker>
+      <!-- </md-input-container> -->
+      <md-input-container class="md-block">
+        <label>Assignee</label>
+        <textarea name="assignee" ng-model="task.assignee" md-maxlength="7" rows="5" md-select-on-focus>
+        </textarea>
+        <!-- <div class="errors" ng-messages="taskForm.millage.$error" ng-if="!task.millage" ng-show="taskForm.$submitted || taskForm.millage.$touched">
+          <div ng-message="required">Required</div>
+        </div> -->
+      </md-input-container>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-sm-6">
+    <md-toolbar class="md-table-toolbar md-default">
+      <div class="md-toolbar-tools">
+        <span>Tasks</span>
+      </div>
+    </md-toolbar>
+    <md-table-container>
+      <table md-table md-row-select ng-model="selected">
+        <thead md-head md-order="query.order">
+          <tr md-row>
+            <th md-column md-order-by="nameToLower"><span>Title</span></th>
+            <th md-column md-numeric>Description</th>
+            <th md-column md-numeric>Due Date</th>
+            <th md-column md-numeric>Assignee</th>
+            <th md-column md-numeric>Remove</th>
+          </tr>
+        </thead>
+        <tbody md-body>
+          <tr ng-click="taskctrl.clickRow(task)" md-row md-select="task" md-on-select="selectedItem" md-on-deselect="deselectedItem" md-select-id="name" md-auto-select ng-repeat="task in tasks">
+            <td md-cell>{{task.title}}</td>
+            <td md-cell>{{task.description}}</td>
+            <td md-cell>{{task.duedate | date:"MM/dd/yyyy"}}</td>
+            <td md-cell>{{task.assignee}}</td>
+            <td md-cell>
+              <md-button class="md-icon-button md-accent" ng-click="taskctrl.removeTask(task._id)" aria-label="Delete">
+                <i class="fa fa-times"></i>
+              </md-button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </md-table-container>
+  </div>
+</div>
